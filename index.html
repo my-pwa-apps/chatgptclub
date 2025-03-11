@@ -11,12 +11,10 @@
 </head>
 <body>
 <script>
-let scene, camera, renderer;
-
-window.onload = () => {
+window.addEventListener('load', () => {
     init();
     animate();
-};
+});
 
 function init() {
     scene = new THREE.Scene();
