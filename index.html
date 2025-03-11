@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>VR Industrial Techno Club</title>
+    <style>
+        body { margin: 0; overflow: hidden; }
+    </style>
+    <script src="https://unpkg.com/three@0.165.0/build/three.min.js"></script>
+    <script src="https://unpkg.com/three@0.165.0/examples/js/webxr/VRButton.js"></script>
+</head>
+<body>
+<script>
+let scene, camera, renderer;
+
+window.onload = () => {
+    init();
+    animate();
+};
+
+function init() {
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x101010);
+
+    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100);
+    camera.position.set(0, 1.6, 5);
+
+    renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.xr.enabled = true;
+    document.body.appendChild(renderer.domElement);
+    document.body.appendChild(VRButton.createButton(renderer));
+
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    setupEnvironment();
+}
+
+function animate() {
+    renderer.setAnimationLoop(() => {
+        renderer.render(scene, camera);
+        const error = renderer.getContext().getError();
+        if (error !== renderer.getContext().NO_ERROR) {
+            console.error('WebGL Error:', error);
+        }
+    });
+}
+
+function setupEnvironment() {
+    const floor = new THREE.Mesh(
+        new THREE.PlaneGeometry(20, 20),
+        new THREE.MeshStandardMaterial({ color: 0x282828, roughness: 0.9 })
+    );
+    floor.rotation.x = -Math.PI / 2;
+    scene.add(floor);
+
+    const wallMaterial = new THREE.MeshStandardMaterial({ color: 0x404040, roughness: 0.8 });
+    const wallGeometry = new THREE.BoxGeometry(20, 5, 0.1);
+
+    const walls = [
+        { pos: [0, 2.5, -10], rotY: 0 },
+        { pos: [-10, 2.5, 0], rotY: Math.PI / 2 },
+        { pos: [10, 2.5, 0], rotY: Math.PI / 2 }
+    ];
+
+    walls.forEach(({pos, rotY}) => {
+        const wall = new THREE.Mesh(wallGeometry, wallMaterial);
+        wall.position.set(...pos);
+        wall.rotation.y = rotY;
+        scene.add(wall);
+    });
+
+    const ceiling = new THREE.Mesh(
+        new THREE.PlaneGeometry(20, 20),
+        new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.7, side: THREE.DoubleSide })
+    );
+    ceiling.rotation.x = Math.PI / 2;
+    ceiling.position.y = 5;
+    scene.add(ceiling);
+
+    // Neon Light Tubes
+    for (let i = -8; i <= 8; i += 4) {
+        createNeonLight(i, 4.9, -5, 0xff00ff);
+        createNeonLight(i, 4.9, 0, 0x00ffff);
+        createNeonLight(i, 4.9, 5, 0xffff00);
+    }
+
+    scene.add(new THREE.HemisphereLight(0xffffff, 0x404040, 1));
+
+    const dirLight = new THREE.DirectionalLight(0xffffff, 2);
+    dirLight.position.set(5, 10, 7.5);
+    scene.add(dirLight);
+}
+
+function createNeonLight(x, y, z, color) {
+    const neon = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.05, 0.05, 3, 16),
+        new THREE.MeshStandardMaterial({ color: color, emissive: color, emissiveIntensity: 10 })
+    );
+    neon.position.set(x, y, z);
+    neon.rotation.z = Math.PI / 2;
+    scene.add(neon);
+
+    const pointLight = new THREE.PointLight(color, 5, 8);
+    pointLight.position.set(x, y, z);
+    scene.add(pointLight);
+}
+</script>
+</body>
+</html>
